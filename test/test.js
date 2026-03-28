@@ -1,9 +1,15 @@
-'use strict';
+import MarkdownIt from 'markdown-it';
+import { createRequire } from 'module';
+const require = createRequire(import.meta.url);
+import sidenote from '../index.js';
+import { fileURLToPath } from 'url';
 
-
+const { describe, it } = require('node:test');
 var assert   = require('assert');
 var testgen  = require('markdown-it-testgen');
 var path     = require('path');
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 /*eslint-env mocha*/
 
@@ -32,7 +38,7 @@ function generate(fixturePath, md, env) {
 
 
 describe('sidenote.txt', function () {
-  var md = require('markdown-it')({ linkify: true }).use(require('../'));
+  var md = MarkdownIt({ linkify: true }).use(sidenote);
 
   // Check that defaults work correctly
   generate(path.join(__dirname, 'fixtures/sidenote.txt'), md);

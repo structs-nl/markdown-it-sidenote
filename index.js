@@ -35,7 +35,7 @@ function render_sidenote_ref(tokens, idx, options, env, slf) {
     refid += ':' + tokens[idx].meta.subId;
   }
 
-  return `<label aria-describedby="fn${id}" role="presentationn" class="sidelink" for="fn${id}-content">
+  return `<label aria-describedby="fn${id}" role="presentation" class="sidelink" for="fn${id}-content">
 <a aria-hidden="true" href="#fn${id}"><output class="highlight fnref" id="fnref${refid}">${caption}
 </output></a></label>`;
 }
@@ -47,7 +47,7 @@ function render_sidenote_open(tokens, idx, options, env, slf) {
     id += ':' + tokens[idx].meta.subId;
   }
 
-  return `<aside id="fn${id}" class="sidenote" role="note">
+  return `\n<aside id="fn${id}" class="sidenote" role="note">
     <output aria-hidden="true" class="highlight" id="fn${id}-content">
     <label role="presentation" for="fnref${id}">`;
 }
@@ -68,7 +68,7 @@ function render_sidenote_anchor(tokens, idx, options, env, slf) {
 }
 
 
-module.exports = function sidenote_plugin(md) {
+export default function sidenote_plugin(md) {
   var parseLinkLabel = md.helpers.parseLinkLabel;
 
   md.renderer.rules.sidenote_ref          = render_sidenote_ref;
@@ -199,14 +199,37 @@ module.exports = function sidenote_plugin(md) {
       // search forwards for end of paragraph containing sidenote ref
       while (tok.type !== 'paragraph_close') {
         stack2.push(tok);
-        tok = stack.tokens.pop();
+        tok = stack.pop();
       }
       stack2.push(tok); // push back paragraph close
+      // split the paragraph at the sidenote_ref
+      const original_inline = stack2[0];
+      const children = original_inline.children;
+      const refIndex = children.findIndex(child => child.type === 'sidenote_ref');
+      const before = children.slice(0, refIndex + 1);
+      const after = children.slice(refIndex + 1);
+      const inline1 = new state.Token('inline', '', 0);
+      inline1.children = before;
+      inline1.content = before.reduce((acc, c) => acc + (c.content || ''), '');
+      const inline2 = new state.Token('inline', '', 0);
+      inline2.children = after;
+      inline2.content = after.reduce((acc, c) => acc + (c.content || ''), '');
       const sidenote_tokens = create_sidenote_list_element(state, sidenote, sidenotes.length);
-      sidenote_tokens.reverse();
-      stack.push(...sidenote_tokens); // insert sidenote content after end of paragraph
+      // Replace original inline with first part (including sidenote marker)
+      stack2[0] = inline1;
+
+      // Keep paragraph structure in the same paragraph
+      const paragraphClose = stack2.pop();
+
+      if (after.length > 0) {
+        stack2.push(inline2);
+      }
+
+      stack2.push(...sidenote_tokens);
+      stack2.push(paragraphClose);
+
       stack2.reverse();
-      stack.push(...stack2); // save [sidenote_ref,paragraph_close] range to on stack so we can search for the next ref
+      stack.push(...stack2); // save the modified range
     }
     stack.reverse();
     state.tokens.push(...stack);

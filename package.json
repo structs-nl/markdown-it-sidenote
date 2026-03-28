@@ -2,6 +2,7 @@
   "name": "markdown-it-sidenote",
   "version": "4.1.0",
   "description": "Sidenotes for markdown-it markdown parser.",
+  "type": "module",
   "keywords": [
     "markdown-it-plugin",
     "markdown-it",
@@ -18,7 +19,7 @@
     "coveralls": "^3.0.2",
     "eslint": "^5.9.0",
     "istanbul": "^0.4.5",
-    "markdown-it": "markdown-it/markdown-it",
+    "markdown-it": "^14.1.0",
     "markdown-it-testgen": "~0.1.0",
     "mocha": "^5.2.0",
     "terser": "^3.17.0"
